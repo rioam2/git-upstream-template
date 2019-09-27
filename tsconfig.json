@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"lib": ["esnext", "dom"],
+		"target": "es5",
+		"downlevelIteration": true,
+		"declaration": true,
+		"sourceMap": true,
+		"outDir": "./dist",
+		"strict": true,
+		"module": "commonjs"
+	},
+	"exclude": ["node_modules", "dist"]
+}

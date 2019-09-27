@@ -1,0 +1,64 @@
+{
+	"name": "starter-npm-package-typescript",
+	"license": "MIT",
+	"version": "1.0.0",
+	"author": "rioam2",
+	"homepage": "https://www.npmjs.com/package/starter-npm-package-typescript",
+	"description": "TODO:",
+	"main": "./dist/src/index.js",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/rioam2/starter-npm-package-typescript.git"
+	},
+	"bugs": {
+		"url": "https://github.com/rioam2/starter-npm-package-typescript/issues"
+	},
+	"keywords": [
+		"TODO:"
+	],
+	"scripts": {
+		"build": "rm -rf ./dist && tsc",
+		"test": "nyc mocha",
+		"watch": "mocha --watch",
+		"coverage": "nyc report --reporter=text-lcov | coveralls",
+		"prepublish": "yarn build"
+	},
+	"files": [
+		"dist/**"
+	],
+	"husky": {
+		"hooks": {
+			"pre-commit": "[ ! -f initialize.sh ] || initialize.sh && yarn test && yarn embedme README.md"
+		}
+	},
+	"nyc": {
+		"include": [
+			"src/**/*.ts"
+		],
+		"extension": [
+			".ts"
+		],
+		"require": [
+			"ts-node/register"
+		],
+		"reporter": [
+			"text"
+		],
+		"sourceMap": true,
+		"instrument": true
+	},
+	"devDependencies": {
+		"@types/chai": "^4.2.3",
+		"@types/mocha": "^5.2.6",
+		"chai": "^4.2.0",
+		"coveralls": "^3.0.6",
+		"embedme": "^1.17.1",
+		"husky": "^3.0.5",
+		"mocha": "^6.0.2",
+		"nyc": "^14.1.1",
+		"source-map-support": "^0.5.13",
+		"ts-node": "^8.4.1",
+		"tslint": "^5.20.0",
+		"typescript": "^3.6.3"
+	}
+}
