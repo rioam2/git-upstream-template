@@ -1,7 +1,6 @@
 import * as inquirer from 'inquirer';
 
-import { Commit } from '../dist/src/git';
-import { addRemote, applyUpdate, getUpdates, removeRemote } from './git';
+import { addRemote, applyUpdate, Commit, getUpdates, removeRemote } from './git';
 
 (async function main(remoteUrl?: string): Promise<number> {
 	const remoteName = "upstream-template";
