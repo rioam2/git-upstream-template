@@ -1,5 +1,6 @@
 import * as inquirer from 'inquirer';
 
+import { Commit } from '../dist/src/git';
 import { addRemote, applyUpdate, getUpdates, removeRemote } from './git';
 
 (async function main(remoteUrl?: string): Promise<number> {
@@ -12,15 +13,19 @@ import { addRemote, applyUpdate, getUpdates, removeRemote } from './git';
 	await removeRemote(remoteName);
 	if (await addRemote(remoteName, remoteUrl)) {
 		const updates = await getUpdates(`${remoteName}/master`);
-		const { selection } = await inquirer.prompt({
-			choices: updates.map(commit => ({
-				name: commit.message,
-				value: commit
-			})),
+		const { selection } = await inquirer.prompt<{ selection: Commit[] }>({
+			choices: [
+				new inquirer.Separator(),
+				...updates.map(commit => ({
+					name: commit.message,
+					value: commit
+				}))
+			],
 			name: "selection",
 			type: "checkbox"
 		});
-		for (const update of selection) {
+		const updateSet = selection.sort((commitA, commitB) => commitA.timestamp - commitB.timestamp);
+		for (const update of updateSet) {
 			await applyUpdate(update);
 		}
 	} else {
