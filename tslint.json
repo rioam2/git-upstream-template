@@ -1,6 +1,15 @@
 {
-  "extends": ["tslint:latest"],
-  "rules": {
-    "no-implicit-dependencies": [true, "dev"]
-  }
+	"extends": ["tslint:latest"],
+	"rules": {
+		"no-implicit-dependencies": [true, "dev"],
+		"indent": false,
+		"quotemark": false,
+		"arrow-parens": false,
+		"curly": false,
+		"no-console": false,
+		"trailing-comma": false,
+		"no-empty": false,
+		"interface-name": false,
+		"no-object-literal-type-assertion": false
+	}
 }
