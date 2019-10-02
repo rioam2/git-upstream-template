@@ -10,6 +10,11 @@ export interface Commit {
 	timestamp: number;
 }
 
+export interface Update {
+	package: string;
+	version: string;
+}
+
 export function git(
 	cmd: string,
 	{ noPager, verbose }: { noPager?: boolean; verbose?: boolean } = { noPager: false, verbose: false }
@@ -20,23 +25,26 @@ export function git(
 
 function run(inputCommand: string, { verbose }: { verbose?: boolean } = { verbose: false }): Promise<string> {
 	let output = "";
-
 	const [cmd, ...args] = (
 		inputCommand.match(/[A-z0-9\-\_\:\/\\\.\@\!\#\$\%\^\&\*\(\)\{\}\[\]\;\<\>\=\+\~]+|"[^\"]+"|'[^\']+'/g) || []
 	).map(arg => arg.replace(/\"/g, ""));
 	if (DEBUG) console.log(`» ${inputCommand}`, cmd, args);
-	const process = spawn(cmd, args, { stdio: ["inherit", "pipe", "pipe"] });
-	process.stdout.on("data", chunk => {
-		if (verbose) console.log(chunk.toString());
+	const child = spawn(cmd, args, { stdio: ["inherit", "pipe", "pipe"] });
+
+	if (verbose) {
+		child.stdout.pipe(process.stdout);
+		child.stderr.pipe(process.stderr);
+	}
+	child.stdout.on("data", chunk => {
 		output += chunk;
 	});
-	process.stderr.on("data", chunk => {
-		if (verbose) console.log(chunk.toString());
+	child.stderr.on("data", chunk => {
 		output += chunk;
 	});
+
 	return new Promise((res, rej) => {
 		if (DEBUG) console.log(`« ${output}`);
-		process.on("exit", code => {
+		child.on("exit", code => {
 			if (code) {
 				rej(output);
 			} else {
@@ -96,18 +104,26 @@ export async function applyUpdate(commit: Commit) {
 		verbose: true
 	})).includes("No local changes");
 
-	await successful(() => git(`cherry-pick ${commit.hash} --no-commit`));
+	// If it's an update commit, don't attempt to merge with git, use package manager instead...
+	const update = extractUpdateCommit(commit);
+	if (update) {
+		await successful(() => run(`yarn upgrade ${update.package}@${update.version}`, { verbose: true }));
+		await successful(() => git(`add -u`, { verbose: true }));
+	} else {
+		await successful(() => git(`cherry-pick -X ignore-all-space ${commit.hash} --no-commit`));
+	}
+
 	async function successfullyCommits() {
 		try {
 			await git(`commit -m "${commitMessage}"`, { verbose: true });
 			return true;
 		} catch (stderr) {
-			return stderr.includes("nothing to commit, working tree clean");
+			return stderr.includes("working tree clean");
 		}
 	}
 	while (!(await successfullyCommits())) {
 		await inquirer.prompt({
-			message: chalk.default.yellow`Press any key to retry...`,
+			message: chalk.default.yellow`Resolve/stage conflicts and press any key to continue...`,
 			name: "value"
 		});
 	}
@@ -119,4 +135,16 @@ export async function applyUpdate(commit: Commit) {
 
 function generateUpdateCommitMessage(commit: Commit) {
 	return `🔄 ${commit.hash}: ${commit.message}`;
+}
+
+function extractUpdateCommit(commit: Commit): Update | false {
+	const update = /Bump (\S+) from \S+ to (\S+)/g.exec(commit.message);
+	if (update) {
+		return {
+			package: update[1],
+			version: update[2]
+		};
+	} else {
+		return false;
+	}
 }

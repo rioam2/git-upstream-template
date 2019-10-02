@@ -8,31 +8,33 @@ import { addRemote, applyUpdate, Commit, getUpdates, removeRemote } from './git'
 		console.error("Please provide an upstream-url");
 		return 1;
 	}
-
 	await removeRemote(remoteName);
 	if (await addRemote(remoteName, remoteUrl)) {
 		const updates = await getUpdates(`${remoteName}/master`);
-		const { selection } = await inquirer.prompt<{ selection: Commit[] }>({
-			choices: [
-				new inquirer.Separator(),
-				...updates.map(commit => ({
-					name: commit.message,
-					value: commit
-				}))
-			],
-			name: "selection",
-			type: "checkbox"
-		});
-		const updateSet = selection.sort((commitA, commitB) => commitA.timestamp - commitB.timestamp);
-		for (const update of updateSet) {
-			await applyUpdate(update);
+		if (updates.length) {
+			const { selection } = await inquirer.prompt<{ selection: Commit[] }>({
+				choices: [
+					new inquirer.Separator(),
+					...updates.map(commit => ({
+						name: commit.message,
+						value: commit
+					}))
+				],
+				name: "selection",
+				type: "checkbox"
+			});
+			const updateSet = selection.sort((commitA, commitB) => commitA.timestamp - commitB.timestamp);
+			for (const update of updateSet) {
+				await applyUpdate(update);
+			}
 		}
 	} else {
 		console.log(`Unable to add remote repository with url: ${remoteUrl}`);
 		await removeRemote(remoteName);
 		return 1;
 	}
-
 	await removeRemote(remoteName);
 	return 0;
-})(...process.argv.slice(2)).then(process.exit);
+})(...process.argv.slice(2))
+	.then(process.exit)
+	.catch(console.error);
