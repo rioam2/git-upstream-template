@@ -69,6 +69,7 @@ export async function getCurrentBranchName() {
 
 export async function getUpdates(updateBranch: string) {
 	const currentBranch = await getCurrentBranchName();
+	const currentHashes = (await git(`log ${currentBranch} --format=%h`)).trim().split("\n");
 	const currentMessages = (await git(`log ${currentBranch} --format=%s`)).trim().split("\n");
 	const currentDates = (await git(`log ${currentBranch} --format=%at`)).trim().split("\n");
 	const templateHashes = (await git(`log ${updateBranch} --format=%h`)).trim().split("\n");
@@ -78,7 +79,8 @@ export async function getUpdates(updateBranch: string) {
 	const forkDate = +currentDates[currentDates.length - 1];
 	const afterFork = (commit: Commit) => commit.timestamp >= forkDate;
 	const notApplied = (commit: Commit) =>
-		currentMessages.findIndex(msg => msg.includes("🔄") && msg.includes(commit.hash)) === -1;
+		currentMessages.findIndex(msg => msg.includes("🔄") && msg.includes(commit.hash)) === -1 &&
+		currentHashes.findIndex(hash => hash === commit.hash) === -1;
 	const updates = templateHashes
 		.map((hash, idx) => ({ hash, message: templateMessages[idx], timestamp: +templateDates[idx] } as Commit))
 		.filter(notApplied)

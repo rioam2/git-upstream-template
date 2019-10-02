@@ -28,6 +28,8 @@ import { addRemote, applyUpdate, Commit, getUpdates, removeRemote } from './git'
 			for (const update of updateSet) {
 				await applyUpdate(update);
 			}
+		} else {
+			console.log(`There are no new updates from upstream template repository`);
 		}
 	} else {
 		console.log(`Unable to add remote repository with url: ${remoteUrl}`);
