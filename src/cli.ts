@@ -3,7 +3,7 @@ import * as inquirer from 'inquirer';
 
 import { addRemote, applyUpdate, Commit, getUpdates, removeRemote } from './git';
 
-(async function main(remoteUrl?: string): Promise<number> {
+(async function main(remoteUrl?: string, branch = "master"): Promise<number> {
 	const remoteName = "upstream-template";
 	if (!remoteUrl) {
 		console.error("Please provide an upstream-url");
@@ -11,7 +11,7 @@ import { addRemote, applyUpdate, Commit, getUpdates, removeRemote } from './git'
 	}
 	await removeRemote(remoteName);
 	if (await addRemote(remoteName, remoteUrl)) {
-		const updates = await getUpdates(`${remoteName}/master`);
+		const updates = await getUpdates(`${remoteName}/${branch}`);
 		if (updates.length) {
 			const { selection } = await inquirer.prompt<{ selection: Commit[] }>({
 				choices: [
