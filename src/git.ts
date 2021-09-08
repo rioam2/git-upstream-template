@@ -119,7 +119,7 @@ export async function applyUpdate(commit: Commit) {
 
 	async function successfullyCommits() {
 		try {
-			await git(`commit -m "${commitMessage}"`, { verbose: true });
+			await git(`commit --allow-empty -m "${commitMessage}"`, { verbose: true });
 			return true;
 		} catch (stderr) {
 			return stderr.includes("working tree clean");
