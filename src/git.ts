@@ -69,7 +69,7 @@ export async function getCurrentBranchName() {
 	return (branchOutput.match(/\*\s(\S+)/) as any)[1];
 }
 
-export async function getUpdates(updateBranch: string) {
+export async function getUpdates(updateBranch: string, excludeRegex: string) {
 	const currentBranch = await getCurrentBranchName();
 	const currentHashes = (await git(`log ${currentBranch} --format=%h`)).trim().split("\n");
 	const currentMessages = (await git(`log ${currentBranch} --format=%s`)).trim().split("\n");
@@ -83,8 +83,10 @@ export async function getUpdates(updateBranch: string) {
 	const notApplied = (commit: Commit) =>
 		currentMessages.findIndex(msg => msg.includes("🔄") && msg.includes(commit.hash)) === -1 &&
 		currentHashes.findIndex(hash => hash === commit.hash) === -1;
+  const excluded = (regex: string) => (commit: Commit) => regex === '' || !commit.message.match(regex)
 	const updates = templateHashes
 		.map((hash, idx) => ({ hash, message: templateMessages[idx], timestamp: +templateDates[idx] } as Commit))
+    .filter(excluded(excludeRegex))
 		.filter(notApplied)
 		.filter(afterFork);
 

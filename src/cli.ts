@@ -1,17 +1,15 @@
 #!/usr/bin/env node
 import * as inquirer from 'inquirer';
+import { program } from 'commander';
 
 import { addRemote, applyUpdate, Commit, getUpdates, removeRemote } from './git';
 
-(async function main(remoteUrl?: string, branch = "master"): Promise<number> {
+async function main(remoteUrl: string, branch: string, options: { exclude?: string}) {
 	const remoteName = "upstream-template";
-	if (!remoteUrl) {
-		console.error("Please provide an upstream-url");
-		return 1;
-	}
+
 	await removeRemote(remoteName);
 	if (await addRemote(remoteName, remoteUrl)) {
-		const updates = await getUpdates(`${remoteName}/${branch}`);
+		const updates = await getUpdates(`${remoteName}/${branch}`, String(options.exclude));
 		if (updates.length) {
 			const { selection } = await inquirer.prompt<{ selection: Commit[] }>({
 				choices: [
@@ -34,10 +32,15 @@ import { addRemote, applyUpdate, Commit, getUpdates, removeRemote } from './git'
 	} else {
 		console.log(`Unable to add remote repository with url: ${remoteUrl}`);
 		await removeRemote(remoteName);
-		return 1;
 	}
 	await removeRemote(remoteName);
-	return 0;
-})(...process.argv.slice(2))
-	.then(process.exit)
-	.catch(console.error);
+}
+
+program
+  .version('0.1.0')
+  .argument('<remoteUrl>', 'Url of source template repo')
+  .argument('[branch]', 'branch of template repo to use', 'master')
+  .option('-e, --exclude <regex>', 'regular expression for excluding commits from list of updates based on their commit message')
+  .action(main);
+
+(async () => await program.parseAsync(process.argv))();
